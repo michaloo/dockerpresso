@@ -1,0 +1,18 @@
+version: '2'
+services:
+    web-cli:
+        image: michaloo/dockerpresso-cli
+        env_file: .env
+        volumes_from:
+            - web
+        links:
+            - web
+            - mysql
+    mysql-cli:
+        image: mariadb
+        env_file: .env
+        links:
+            - mysql:mysql
+        command: bash -c 'exec mysql -hmysql -uroot -p$MYSQL_ROOT_PASSWORD'
+        volumes_from:
+            - mysql

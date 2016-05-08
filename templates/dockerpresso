@@ -1,0 +1,40 @@
+#!/bin/bash
+
+case "$1" in
+  up)
+    docker-compose up -d
+    ;;
+  stop)
+    docker-compose stop
+    ;;
+  rm)
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml rm --all
+    ;;
+  ps)
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml ps
+    ;;
+  down)
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml down
+    ;;
+  destroy)
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml down -v
+    ;;
+  mysql)
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml run --rm mysql-cli
+    ;;
+  version)
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml run --rm --entrypoint wp web-cli core version
+    ;;
+  init)
+    touch .env
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml run --rm --no-deps --entrypoint wp web-cli core download
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml run --rm --no-deps --entrypoint wp web-cli environmentalize
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml run --rm --no-deps web-cli mv /var/www/html/.env /project
+    echo "MYSQL_ROOT_PASSWORD=" >> .env
+    ;;
+  *)
+    docker-compose -f docker-compose.yml -f docker-compose.admin.yml run --rm web-cli
+    ;;
+esac
+
+exit 0

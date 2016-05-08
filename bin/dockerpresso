@@ -1,0 +1,9 @@
+#!/bin/bash
+
+case "$1" in
+  *)
+    cp /dockerpresso-templates/* /project
+    ;;
+esac
+
+exit 0
