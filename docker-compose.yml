@@ -1,7 +1,7 @@
 version: '2'
 services:
     web:
-        image: michaloo/wordpress
+        image: michaloo/wordpress-simplified
         env_file: .env
         volumes:
             - web_data:/var/www/html
