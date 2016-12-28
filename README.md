@@ -53,7 +53,7 @@ After installation you can start with following command:
 Which will download latest Wordpress installation and prepare it to work with
 Docker Compose configuration.
 It will also create another file `.env` which will carry all configuration of
-database and Wordpress. Please fill it and then run:
+database and Wordpress. Please fill it (you will need to setup at least following vars: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`) and then run:
 
 `bash dockerpresso up`
 
