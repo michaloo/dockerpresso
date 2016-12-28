@@ -2,6 +2,8 @@
 
 Docker Compose configuration generator for fast Wordpress Theme or plugin development.
 
+More information about reasons behind Dockerpresso are presented in [this blog post](https://medium.com/@michaloo/express-wordpress-theme-and-plugin-development-environment-e077d52535e0).
+
 ## Fast start
 
 ```
