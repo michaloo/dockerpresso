@@ -1,11 +1,10 @@
-FROM debian:jessie
+FROM alpine:3
 
 # Adds entrypoint script
-COPY bin/dockerpresso /
+COPY bin/dockerpresso-installer /bin
 
-COPY templates/dockerpresso /dockerpresso-templates/
-COPY docker-compose* /dockerpresso-templates/
+COPY ./templates /templates
 
 VOLUME /project
 
-ENTRYPOINT /dockerpresso
+ENTRYPOINT /bin/dockerpresso-installer /project
