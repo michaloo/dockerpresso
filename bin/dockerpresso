@@ -1,0 +1,249 @@
+#!/usr/bin/env sh
+set -e
+
+VERSION="2.0.0"
+
+SCRIPT_PATH=$(dirname "$0")
+
+DOCKERPRESSO_FILE="Dockerpressofile"
+MAIN_DC_FILE="docker-compose.yml"
+ADMIN_DC_FILE="docker-compose.admin.yml"
+ALL_DC_FILES="-f $MAIN_DC_FILE -f $ADMIN_DC_FILE"
+WP_CONFIG_SAMPLE_FILE="wp-config-sample.php"
+WP_CONFIG_FILE="wp-config.php"
+
+
+assert_initialized() {
+  if [ ! -f $MAIN_DC_FILE ] || [ ! -f $ADMIN_DC_FILE ] || [ ! -f $DOCKERPRESSO_FILE ] ; then
+    echo "Dockerpresso was not initialized correctly here, run \`dockerpresso init\`" >&2
+    exit 2
+  fi
+}
+
+ensure_downloaded() {
+  if ! $(docker-compose $ALL_DC_FILES run --rm --no-deps web-cli test -f $WP_CONFIG_SAMPLE_FILE); then
+    echo "It seems wordpress was not downloaded yet, downloading"
+    $0 download
+  fi
+}
+
+ensure_configured() {
+  if ! $(docker-compose $ALL_DC_FILES run --rm --no-deps web-cli test -f $WP_CONFIG_FILE); then
+    echo "It seems wordpress was not configured yet, configuring"
+    $0 configure
+  fi
+}
+
+wait_for_mysql() {
+  while ! $0 mysql-check &> /dev/null; do
+    printf "."
+    sleep 1
+  done
+}
+
+case "$1" in
+  --debug) # Argument acting as a simple flag
+    set -x
+    shift 1
+    ;;
+esac
+
+case "$1" in
+  up)
+    assert_initialized
+    docker-compose up -d --force-recreate
+    ensure_downloaded
+    ensure_configured
+    wait_for_mysql
+    echo "Running Dockerpressofile script"
+    docker-compose $ALL_DC_FILES run --rm --no-deps web-cli < Dockerpressofile
+    ;;
+  stop)
+    assert_initialized
+    docker-compose stop
+    ;;
+  rm)
+    assert_initialized
+    docker-compose $ALL_DC_FILES rm
+    ;;
+  ps)
+    assert_initialized
+    docker-compose $ALL_DC_FILES ps
+    ;;
+  logs)
+    assert_initialized
+    docker-compose $ALL_DC_FILES logs
+    ;;
+  down)
+    assert_initialized
+    docker-compose $ALL_DC_FILES down
+    ;;
+  destroy)
+    assert_initialized
+    # docker-compose $ALL_DC_FILES run --rm --no-deps web-cli rm -rf .
+    docker-compose $ALL_DC_FILES down -v
+    ;;
+  mysql)
+    assert_initialized
+    docker-compose $ALL_DC_FILES run --rm mysql-cli
+    ;;
+  version)
+    echo $VERSION
+    ;;
+  wp-version)
+    assert_initialized
+    docker-compose $ALL_DC_FILES run --rm --entrypoint wp web-cli core version
+    ;;
+  init)
+    echo "Initializing Dockerpresso (version $VERSION) in `pwd`"
+
+    cat <<'EOT' >> .env
+MYSQL_DATABASE=database
+MYSQL_USER=user
+MYSQL_PASSWORD=password
+MYSQL_ROOT_PASSWORD=test
+
+DB_HOST=mysql
+DB_CHARSET=
+DB_COLLATE=
+TABLE_PREFIX=wp_
+
+WP_DEBUG=true
+WP_DEBUG_LOG=
+WP_CACHE=
+WPCACHEHOME=
+UPLOADS=
+
+FS_METHOD=
+DISABLE_WP_CRON=
+DISALLOW_FILE_EDIT=
+EOT
+
+    cat <<'EOT' >> docker-compose.admin.yml
+version: '2'
+services:
+    web-cli:
+        image: wordpress:cli
+        command: bash
+        env_file: .env
+        volumes_from:
+            - web
+        links:
+            - web
+            - mysql
+    mysql-cli:
+        image: mariadb
+        env_file: .env
+        links:
+            - mysql:mysql
+        command: bash -c 'exec mysql -hmysql -uroot -p$MYSQL_ROOT_PASSWORD'
+        volumes_from:
+            - mysql
+EOT
+
+    cat <<'EOT' >> docker-compose.yml
+version: '2'
+services:
+    web:
+        image: wordpress
+        env_file: .env
+        volumes:
+            - ./wordpress_data:/var/www/html/
+            # uncomment line below to start theme development
+            # - ./example-theme-src:/var/www/html/wp-content/themes/example-theme
+            # uncomment line below to start plugin development
+            # - ./example-plugin-src:/var/www/html/wp-content/plugins/example-plugin
+        ports:
+            - "80:80"
+        links:
+            - mysql
+    mysql:
+        image: mariadb
+        env_file: .env
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql_data:/var/lib/mysql
+volumes:
+    mysql_data: {}
+
+EOT
+
+    cat <<'EOT' >> Dockerpressofile
+#!/usr/bin/env sh
+
+# This is file which will be run every time Dockerpresso managed Wordpress
+# is started or restarted.
+# You can use any wp-cli command here such as plugin installation or activation.
+# Use it to prepare environment your plugin or theme may need
+
+
+wp core install --url=localhost --title=Localhost --admin_user=admin --admin_password=pass --admin_email=admin@localhost.local
+
+EOT
+    echo "Edit docker-compose.yml and Dockerpresso files"
+    echo "Run dockerpresso up to start"
+    echo "Remember to add wordpress_data to .gitignore"
+    ;;
+  mysql-check)
+    docker-compose $ALL_DC_FILES run --rm mysql-cli bash -c 'exec mysqladmin ping -h"$DB_HOST" --silent'
+    ;;
+  download)
+    assert_initialized
+    docker-compose $ALL_DC_FILES run --rm --no-deps web-cli wp core download
+    ;;
+  configure)
+    assert_initialized
+    docker-compose $ALL_DC_FILES run --rm --no-deps web-cli wp config create --dbname="" --dbuser="" --skip-check --extra-php <<PHP
+define( 'WP_DEBUG', filter_var(getenv("WP_DEBUG"), FILTER_VALIDATE_BOOLEAN) );
+define( 'WP_DEBUG_LOG', filter_var(getenv("WP_DEBUG_LOG"), FILTER_VALIDATE_BOOLEAN) );
+define( 'WP_CACHE' , filter_var(getenv("WP_CACHE"), FILTER_VALIDATE_BOOLEAN) );
+define( 'WPCACHEHOME', getenv("WPCACHEHOME") );
+define( 'UPLOADS', getenv("UPLOADS") );
+
+define('FS_METHOD', getenv("FS_METHOD") );
+define('DISABLE_WP_CRON', filter_var(getenv("DISABLE_WP_CRON"), FILTER_VALIDATE_BOOLEAN));
+define('DISALLOW_FILE_EDIT', filter_var(getenv("DISALLOW_FILE_EDIT"), FILTER_VALIDATE_BOOLEAN));
+PHP
+
+    docker-compose $ALL_DC_FILES run --rm --no-deps web-cli sed -i \
+      -e "s/define( 'DB_NAME',.*/define( 'DB_NAME', getenv('MYSQL_DATABASE') );/" \
+      -e "s/define( 'DB_USER',.*/define( 'DB_USER', getenv('MYSQL_USER') );/" \
+      -e "s/define( 'DB_PASSWORD',.*/define('DB_PASSWORD', getenv('MYSQL_PASSWORD') );/" \
+      -e "s/define( 'DB_HOST',.*/define( 'DB_HOST', getenv('DB_HOST') );/" \
+      -e "s/define( 'DB_CHARSET',.*/define( 'DB_CHARSET', getenv('DB_CHARSET') );/" \
+      -e "s/define( 'DB_COLLATE',.*/define( 'DB_COLLATE', getenv('DB_COLLATE') );/" \
+      -e "s/\$table_prefix =.*/\$table_prefix = getenv( 'TABLE_PREFIX' );/" \
+        wp-config.php
+    ;;
+  cli)
+    assert_initialized
+    docker-compose $ALL_DC_FILES run --rm web-cli
+    ;;
+  cp)
+    docker-compose $ALL_DC_FILES run --no-deps -d web
+    docker cp $2 $(docker-compose $ALL_DC_FILES ps -q web):/var/www/html
+    docker-compose $ALL_DC_FILES stop web
+    docker-compose $ALL_DC_FILES rm web
+  ;;
+  *)
+    echo "Dockerpresso $VERSION"
+    echo "Dockerpresso simplifies Wordpress theme and plugin development."
+    echo ""
+    echo "Usage:"
+    echo "\tversion - show dockerpresso version"
+    echo "\tinit    - initialize dockerpresso based project and creates required files"
+    echo "\tup      - (re)creates both web and mysql containers and runs Dockerpresso provisioning script."
+    echo "\t          Creates wp-config.php and installs Wordpress if needed"
+    echo "\tcli     - starts a cli console where wp-cli can be used"
+    echo "\tmysql   - starts a cli console to interact with mysql database"
+    echo "\tps      - lists running docker containers"
+    echo "\tlogs    - show logs from the docker containers"
+    echo "\tstop    - stops docker containers"
+    echo "\trm      - removes docker containers"
+    echo "\tdown    - stops and removes docker containers"
+    echo "\tdestroy - stops, removes docker containers and removes volumes with database and wordpress data"
+    ;;
+esac
+
+exit 0

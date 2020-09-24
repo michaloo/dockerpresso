@@ -1,9 +1,0 @@
-#!/usr/bin/env sh
-
-# This is file which will be run every time Dockerpresso managed Wordpress
-# is started or restarted.
-# You can use any wp-cli command here such as plugin installation or activation.
-# Use it to prepare environment your plugin or theme may need
-
-
-# wp core install --url=example.com --title=Example --admin_user=supervisor --admin_password=strongpassword --admin_email=info@example.com

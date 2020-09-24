@@ -15,13 +15,19 @@
 wp db export
 ```
 
-Now let's bring those files to your local directory where your project is
+Now let's extract those files locally into wordpress_data directory:
 
 
 ```sh
 mkdir wordpress_data
 tar zxvf wordpress_files.tgz -C ./wordpress_data/
 tar zxvf wordpress_uploads.tgz -C ./wordpress_data/
+```
+
+Then, let's copy them over to docker volume:
+
+```sh
+dockerpresso cp wordpress_data/*
 ```
 
 Once files are extracted we can generate wp-config.php file:
