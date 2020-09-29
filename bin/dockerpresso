@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-VERSION="2.0.0"
+VERSION="2.0.1"
 
 SCRIPT_PATH=$(dirname "$0")
 
@@ -225,7 +225,7 @@ PHP
   #   docker cp $2 $(docker-compose $ALL_DC_FILES ps -q web):/var/www/html
   #   docker-compose $ALL_DC_FILES stop web
   #   docker-compose $ALL_DC_FILES rm web
-  ;;
+  #   ;;
   *)
     echo "Dockerpresso $VERSION"
     echo "Dockerpresso simplifies Wordpress theme and plugin development."
