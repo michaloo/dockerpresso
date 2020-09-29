@@ -220,11 +220,11 @@ PHP
     assert_initialized
     docker-compose $ALL_DC_FILES run --rm web-cli
     ;;
-  cp)
-    docker-compose $ALL_DC_FILES run --no-deps -d web
-    docker cp $2 $(docker-compose $ALL_DC_FILES ps -q web):/var/www/html
-    docker-compose $ALL_DC_FILES stop web
-    docker-compose $ALL_DC_FILES rm web
+  # cp)
+  #   docker-compose $ALL_DC_FILES run --no-deps -d web
+  #   docker cp $2 $(docker-compose $ALL_DC_FILES ps -q web):/var/www/html
+  #   docker-compose $ALL_DC_FILES stop web
+  #   docker-compose $ALL_DC_FILES rm web
   ;;
   *)
     echo "Dockerpresso $VERSION"
