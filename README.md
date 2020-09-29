@@ -1,74 +1,80 @@
 # Dockerpresso
 
-Docker Compose configuration generator for fast Wordpress Theme or plugin development.
+Docker + Rapid Wordpress Development = Dockerpresso
 
-More information about reasons behind Dockerpresso are presented in [this blog post](https://medium.com/@michaloo/express-wordpress-theme-and-plugin-development-environment-e077d52535e0).
 
-## Fast start
+Docker Compose configuration generator for fast Wordpress theme or plugin development.
 
+## Getting started
+
+Let's go straight to your shell:
+
+```sh
+# install dockerpresso
+curl -O https://raw.githubusercontent.com/michaloo/dockerpresso/master/bin/dockerpresso && chmod +x dockerpresso && mv dockerpresso /usr/local/bin
+
+# create your project directory
+mkdir your-new-project && cd your-new-project
+
+# initialize dockerpresso configuration
+dockerpresso init
+
+# decide what you want to develop and how to inject that into wordpress installation
+subl docker-compose.yml
+
+# write any additional provisioning script for adding plugins etc.
+subl Dockerpressofile
+
+# quickly review the wp-config.php setup
+subl .env
+
+# run it!
+dockerpresso up
 ```
-mkdir your-new-project
-cd your-new-project
-docker run --rm -v `pwd`:/project michaloo/dockerpresso
-vim docker-compose.yml
-bash dockerpresso init
-vim .env
-bash dockerpresso up
-```
 
-Open your Docker host name or ip in browser. Fresh Wordpress installation
-with your plugin or theme mounted in `wp-content` directory is ready
-to work on!
+Open your Docker host name or ip in your browser. Fresh Wordpress installation
+with your plugin or theme mounted in `wp-content` directory is ready to work on!
 
-## Installation
+## Basic usage
 
-In your project root directory execute:
+Once dockepresso is installed start by initializing your project:
 
-```docker run --rm -v `pwd`:/project michaloo/dockerpresso```
+`dockerpresso init`
 
 It will generate following files in your project root:
 
 ```
-/dockerpresso
+.env
 /docker-compose.yml
 /docker-compose.admin.yml
+Dockerpressofile
 ```
 
+* `.env` contains environmental variables which controls your setup and wp-config.php
+
 * `docker-compose.yml` contains base Docker configuration for two services
-`web` and `mysql`.
+`web` and `mysql`
 
 * `docker-composer.admin.yml` contains configuration for two additional one-time
-commands services `web-cli` and `mysql-cli`.
+commands services `web-cli` and `mysql-cli`
 
-* `dockerpresso` is a bash script with simple shortcuts for most common commands.
+* `Dockerpressofile` is a script where wp-cli can be used to prepare Wordpress installation (e.g. install required plugins)
 
-Please edit `docker-compose.yml` to enable theme or plugin development.
+Please edit those files according to your needs and start the service.
 
-## Basic usage
 
-After installation you can start with following command:
-
-`bash dockerpresso init`
-
-Which will download latest Wordpress installation and prepare it to work with
-Docker Compose configuration.
-It will also create another file `.env` which will carry all configuration of
-database and Wordpress. Please fill it (you will need to setup at least following vars: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`) and then run:
-
-`bash dockerpresso up`
+`dockerpresso up`
 
 Which will start web and mysql services.
 After launching it you should be able to complete Wordpress installation
 process when opening in browser your Docker host name or ip.
 
-## Components
+## Installation
 
-Dockerpresso project base on following components:
+Dockerpresso is simple bash script. It requires bash, docker and docker-compose to run.
 
-* [michaloo/docker_wp-cli](https://github.com/michaloo/docker_wp-cli)
-Docker image with WP-CLI tool installed which is a base image for dockerpresso.
-All download and maintenance commands are done by WP-CLI.
+You can install it with following one-liner to install it in `/usr/local/bin`:
 
-* [michaloo/wp-cli-environmentalize](https://github.com/michaloo/wp-cli-environmentalize)
-WP-CLI package which injects `getenv` into `wp-config.php` to make Wordpress
-to work on ENV variables set for docker containers.
+`curl -O https://raw.githubusercontent.com/michaloo/dockerpresso/master/bin/dockerpresso && chmod +x dockerpresso && mv dockerpresso /usr/local/bin`
+
+
