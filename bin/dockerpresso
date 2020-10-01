@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-VERSION="2.0.1"
+VERSION="2.0.2"
 
 SCRIPT_PATH=$(dirname "$0")
 
@@ -148,7 +148,7 @@ services:
         image: wordpress
         env_file: .env
         volumes:
-            - ./wordpress_data:/var/www/html/
+            - wordpress_data:/var/www/html/
             # uncomment line below to start theme development
             # - ./example-theme-src:/var/www/html/wp-content/themes/example-theme
             # uncomment line below to start plugin development
@@ -166,6 +166,7 @@ services:
             - mysql_data:/var/lib/mysql
 volumes:
     mysql_data: {}
+    wordpress_data: {}
 
 EOT
 
