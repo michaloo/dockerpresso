@@ -5,36 +5,6 @@ Docker + Rapid Wordpress Development = Dockerpresso
 
 Docker Compose configuration generator for fast Wordpress theme or plugin development.
 
-
-                             ./.
-                            ////
-                            /////*
-                            *//////
-                       /*    ///////.
-                      ///*    *//////*
-                      .////    *//////
-                       .////,   //////.
-                        .////    /////
-                         ,///    ,///
-                          //     .//
-                          *      /
-
-    .....................................................   ......
-    ................................................................
-    .....................................................        ....
-     ...................................................         ....
-     ..................................................        ....
-      ................................................      .....
-       ..............................................    ......
-        ............................................ ......
-          ..........................................
-           ......................................
-             ..................................
-               ..............................
-  .........................................................
-    .,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-
-
 ## Getting started
 
 Let's go straight to your shell:
@@ -132,5 +102,5 @@ Every time this command it run it will recreate docker containers making sure cu
 
 ## Guides
 
-[How to change things in wp-config.php?](./documentation/HOW_TO_CHANGE_WP_CONFIG.md)
-[How to import existing Wordpress?](./documentation/HOW_TO_IMPORT_EXISTING_WORDPRESS.md)
+- [How to change things in wp-config.php?](./documentation/HOW_TO_CHANGE_WP_CONFIG.md)
+- [How to import existing Wordpress?](./documentation/HOW_TO_IMPORT_EXISTING_WORDPRESS.md)
