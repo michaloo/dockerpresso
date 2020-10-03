@@ -7,32 +7,31 @@ This guide assumes you have access to `ssh` and `wp-cli` on your production serv
 
 ## Preparation
 
-Make sure that you have
-First we will make sure that the volume exists:
+Make sure that you have initialized dockerpresso in your project directory.
 
 ```sh
-dockepresso up
+dockepresso init
 ```
 
 ## Export existing Wordpress site files
 
 If your website is relatively small you can just run following command to pack everything
-into one compressed file:
+into one `tgz` file:
 
 ```sh
 tar --exclude='wp-config.php' -zcvf ../wordpress_files.tgz .
 ```
 
-Alternatively if your Wordpress instace contains lots of media files which you don't need for development
-and downloading them would be an unnecesary effort, then we will create two separate files to copy over (we assume that media files are in default `wp-content/uploads` directory - if not adjust it in commands below)
+Alternatively if your Wordpress instance contains lots of media files which you don't need for development
+and downloading them would be too time-consuming, we will create two separate files to copy over (we assume that media files are in `wp-content/uploads` directory - if not, adjust it in commands below).
 
-First file containing all Wordpress data without media files:
+First, let's create a file containing all Wordpress data without media files:
 
 ```sh
 tar --exclude='wp-config.php' --exclude='wp-content/uploads' -zcvf ../wordpress_files.tgz .`
 ```
 
-Second file which will contain media files but just from last 7 days:
+Then, let's prepare a second file which will contain media files but just from last 7 days:
 
 ```sh
 find wp-content/uploads -type f -mtime -7 | xargs tar -zc vf ../wordpress_uploads.tgz
@@ -48,49 +47,48 @@ wp db export
 
 This will create a new sql file.
 
+## Copy all create files from server
+
+You know how to do it :) Please use sftp, scp or any other tool to copy over files created in previous steps to your local machine.
 
 ## Importing Wordpress files into Dockerpresso instance
 
-Now let's extract those files locally into one `wordpress_data` directory:
+Now let's extract those files locally into `wordpress_data` directory:
 
 
 ```sh
-mkdir wordpress_data
 tar zxvf wordpress_files.tgz -C ./wordpress_data/
-# run this command only if you separated the extracts above
+
+# run this command only if you separated the extracts in previous steps
 tar zxvf wordpress_uploads.tgz -C ./wordpress_data/
 ```
 
-Then, let's copy them over to our docker volume.
-We will use native docker function `cp` to copy over files:
+
+## Import Wordpress database into Dockerpresso instance
+
+The easiest way of getting the sql import would be to move the sql dump into the wordpress_data directory and use wp-cli to import it.
 
 ```sh
-docker cp wordpress_data/* $(docker-compose $ALL_DC_FILES ps -q web):/var/www/html
+mv wordpress_database.sql ./wordpress_data
+dockerpresso cli
+wp db import wordpress_database.sql
+```
+
+## Post-import adjustments
+
+After your Wordpress instance is moved, you probably want to adjust it slightly to make it work on your local instance.
+
+You may want to replace the urls using wp-cli search-replace tool:
+
+```sh
+dockerpresso cli
+wp search-replace 'website.com' 'localhost'
 ```
 
 
-We can now start both http and mysql servers:
+Also, you may want to change password for admin account for quicker logins:
 
-`sh dockerpresso up`
-
-Now the easiest way of getting the sql import would be to move the sql dump into the wordpress_data directory and use wp-cli to import it.
-
-`mv wordpress_database.sql ./wordpress_data`
-
-`sh dockerpresso`
-
-`wp db import wordpress_database.sql`
-
-
-
-and as a last step you probably want to rewrite urls from the production instance to local urls.
-
-`wp search-replace 'website.com' 'website.local'`
-
-
-you may also set other password:
-
-`wp user update user_name --user_pass=test`
-
-
-if you are using jetpack
+```sh
+dockerpresso cli
+wp user update user_name --user_pass=test
+```
